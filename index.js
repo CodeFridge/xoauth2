@@ -1,6 +1,7 @@
-var requestlib = require("request"),
-    Stream = require("stream").Stream,
-    utillib = require("util");
+var requestlib  = require("request"),
+    Stream      = require("stream").Stream,
+    utillib     = require("util"),
+    querystring = require('querystring');
 
 /**
  * Wrapper for new XOAuth2Generator.
@@ -86,11 +87,16 @@ XOAuth2Generator.prototype.generateToken = function(callback){
         refresh_token: this.options.refreshToken,
         grant_type: "refresh_token"
     };
+    var tokenBody = querystring.stringify(urlOptions);
 
     requestlib({
             method: "POST",
-            url: this.options.accessUrl, 
-            form: urlOptions
+            uri: this.options.accessUrl,
+            body: tokenBody,
+            headers: {
+                'Content-Type'   : 'application/x-www-form-urlencoded',
+                'Content-Length' : Buffer.byteLength(tokenBody)
+            }
         }, (function(error, response, body){
             var data;
 
@@ -102,7 +108,7 @@ XOAuth2Generator.prototype.generateToken = function(callback){
             }catch(E){
                 return callback(E);
             }
-            
+
             if(!data || typeof data != "object"){
                 return callback(new Error("Invalid authentication response"));
             }
